@@ -33,7 +33,13 @@
             <i class="el-icon-s-custom"></i>
             面试人管理
           </el-menu-item>
-
+          <el-menu-item
+            v-if="type === 20"
+            index="/amendPassword"
+          >
+            <i class="el-icon-s-custom"></i>
+            修改密码
+          </el-menu-item>
         </el-menu>
       </el-aside>
 

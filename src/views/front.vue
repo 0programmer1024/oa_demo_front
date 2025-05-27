@@ -1,9 +1,9 @@
 <template>
   <div class="router-view-container" style="flex: 1; min-height: calc(100% - 60px);">
     <!-- 新增搜索栏 -->
-    <div style="width: 100% ;max-height: 50px; display: flex;">
+    <div style="width: 100% ;max-height: 50px; display: ruby;" @keyup.enter="handleSearch" tabindex="0">
       <el-input style="max-width: 200px" v-model="queryInfo.name" placeholder="姓名搜索" clearable></el-input>
-      <el-input style="max-width: 200px;margin-left: 10px" v-model="queryInfo.phone" placeholder="联系电话搜索" clearable></el-input>
+<!--      <el-input style="max-width: 200px;margin-left: 10px" v-model="queryInfo.phone" placeholder="联系电话搜索" clearable></el-input>-->
       <el-input style="max-width: 200px;margin-left: 10px" v-model="queryInfo.email" placeholder="邮箱搜索" clearable></el-input>
       <el-date-picker
       v-model="searchDateTimeRange"
@@ -13,7 +13,8 @@
       end-placeholder="结束日期">
     </el-date-picker>
       <el-input style="max-width: 200px;margin-left: 10px" v-model="queryInfo.interviewerName" placeholder="面试人姓名搜索" clearable></el-input>
-      <el-button style="margin-left: 10px" type="primary" @click="handleSearch">搜索</el-button>
+      <el-button style="margin-left: 10px" type="primary" @click="handleSearch" @keyup.enter.native="handleSearch">搜索</el-button>
+<!--      <el-button style="margin-left: 10px" type="primary" @click="edit">新建</el-button>-->
     </div>
     <el-table
       :data="userList"
@@ -28,26 +29,20 @@
       <el-table-column prop="phone" label="联系电话" min-width="80px"></el-table-column>
       <el-table-column prop="email" label="邮箱" min-width="100px"></el-table-column>
       <el-table-column prop="interviewTime" label="应聘时间" min-width="100px"></el-table-column>
-      <el-table-column label="评价状态" min-width="80px">
-        <template slot-scope="scope">
-          <el-tag :type="scope.row.evaluation ? 'success' : 'warning'">
-            {{ scope.row.evaluation ? '已评价' : '未评价' }}
-          </el-tag>
-        </template>
-      </el-table-column>
-      <el-table-column v-if="userType === 10" label="操作" min-width="80px">
-         <template slot-scope="scope">
-           <el-button type="text" @click="edit(scope.row)">编辑</el-button>
-           <el-button type="text" @click="del(scope.row.id)">删除</el-button>
-         </template>
-      </el-table-column>
-      <!-- 追加插槽，插入一行，跨列显示按钮 -->
-      <template #append>
-        <div style="text-align: center;">
-          <el-button v-if="userType === 10" style="margin-left: 10px" type="text" @click="add">添加应聘者信息</el-button>
-        </div>
-      </template>
+      <el-table-column prop="interviewerName" label="面试人姓名" min-width="80px" ></el-table-column>
+<!--      <el-table-column label="操作" min-width="80px">-->
+<!--         <template slot-scope="scope">-->
+<!--           <el-button type="text" @click="edit(scope.row)">编辑</el-button>-->
+<!--           <el-button type="text" @click="del(scope.row.id)">删除</el-button>-->
+<!--         </template>-->
+<!--      </el-table-column>-->
     </el-table>
+<!--    <div>-->
+<!--        <el-button style="margin-left: 10px" type="text" @click="add">添加应聘者信息</el-button>-->
+<!--    </div>-->
+    <!--分页区域-->
+
+    <!-- 新增分页容器 -->
     <div class="pagination-container">
       <el-pagination
         style="float: right"
@@ -71,13 +66,8 @@ import ApplicantDialog from "@/views/components/applicantDialog.vue";
 export default {
   name: 'HelloWorld',
   computed: {
-    userType() {
-      const user = this.$store.state.user
-      console.log(user && user.type)
-      return user && user.type
-    },
   },
-  components: { ApplicantDialog},
+  components: {ApplicantDialog},
   data() {
     return {
       userList: [], // 用户列表
@@ -144,17 +134,17 @@ export default {
         this.queryInfo.interviewerTimeStart = this.searchDateTimeRange[0]
         this.queryInfo.interviewerTimeEnd = this.searchDateTimeRange[1]
       }
-      this.queryInfo.interviewerFlag = this.$store.state.user.type === 20
+      this.queryInfo.interviewerFlag = false
       applicantPage(this.queryInfo)
         .then((res) => {
           if (res.code === 1) {
             this.userList = res.data.records;
             this.total = res.data.total;
-            this.queryInfo.interviewerTimeStart = null;
-            this.queryInfo.interviewerTimeEnd = null;
           } else {
             this.$message.error(res.msg);
           }
+          this.queryInfo.interviewerTimeStart = null
+          this.queryInfo.interviewerTimeEnd = null
         })
         .catch((err) => {
           console.log(err);

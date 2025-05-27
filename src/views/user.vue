@@ -1,14 +1,5 @@
 <template>
   <div class="router-view-container" style="flex: 1; min-height: calc(100% - 60px);">
-    <!-- 新增搜索栏 -->
-<!--    <div style="width: 100% ;max-height: 50px; display: flex;">-->
-<!--      <el-input style="max-width: 200px" v-model="queryInfo.name" placeholder="姓名搜索" clearable></el-input>-->
-<!--      <el-input style="max-width: 200px;margin-left: 10px" v-model="queryInfo.genderName" placeholder="性别搜索" clearable></el-input>-->
-<!--      <el-input style="max-width: 200px;margin-left: 10px" v-model="queryInfo.email" placeholder="邮箱搜索" clearable></el-input>-->
-<!--      <el-input style="max-width: 200px;margin-left: 10px" v-model="queryInfo.address" placeholder="地址搜索" clearable></el-input>-->
-<!--      <el-button style="margin-left: 10px" type="primary" @click="handleSearch">搜索</el-button>-->
-<!--      <el-button style="margin-left: 10px" type="primary" @click="edit">新建</el-button>-->
-<!--    </div>-->
     <el-table
       :data="userList"
       empty-text="暂无数据"
@@ -21,16 +12,20 @@
           <el-button type="text" @click="del(scope.row.id)">删除</el-button>
         </template>
       </el-table-column>
+      <!-- 追加插槽，插入一行，跨列显示按钮 -->
+      <template #append>
+        <div style="text-align: center;">
+            <el-button type="text" @click="add">添加面试人</el-button>
+        </div>
+      </template>
     </el-table>
     <!--分页区域-->
-    <el-button style="margin-left: 10px" type="text" @click="add">添加面试人</el-button>
-    <!-- 新增分页容器 -->
     <div class="pagination-container">
       <el-pagination
         style="float: right"
         @size-change="handleSizeChange"
         @current-change="handleCurrentChange"
-        :current-page="queryInfo.page"
+        :current-page="queryInfo.pageNo"
         :page-sizes="[1, 2, 5, 10]"
         :page-size="queryInfo.pageSize"
         layout="total, sizes, prev, pager, next, jumper"
@@ -39,18 +34,15 @@
       </el-pagination>
     </div>
     <user-dialog v-if="userDialogVisible" :userDialogVisible.sync="userDialogVisible" :info="info"></user-dialog>
-    <user-add-dialog v-if="userAddDialogVisible" :userAddDialogVisible.sync="userAddDialogVisible" :info="info"></user-add-dialog>
   </div>
 </template>
 
 <script>
 import {delInterviewer, pageInterviewers} from "@/api/user";
 import UserDialog from "@/views/components/userDialog.vue";
-import {applicantDelete} from "@/api/applicant";
-import UserAddDialog from "@/views/components/userAddDialog.vue";
 export default {
   name: 'HelloWorld',
-  components: {UserAddDialog, UserDialog},
+  components: {UserDialog},
   data() {
     return {
       userList: [], // 用户列表
@@ -63,8 +55,7 @@ export default {
       info:{
         name: '',
       },
-      userDialogVisible: false,
-      userAddDialogVisible: false
+      userDialogVisible: false
     }
   },
   created() { // 生命周期函数
@@ -81,13 +72,13 @@ export default {
     // 监听 当前页码值 改变的事件
     handleCurrentChange(newPage) {
       // console.log(newPage)
-      this.queryInfo.page = newPage;
+      this.queryInfo.pageNo = newPage;
       // 重新发起请求用户列表
       this.getUserList();
     },
     // 新增搜索方法
     handleSearch() {
-      this.queryInfo.page = 1; // 重置到第一页
+      this.queryInfo.pageNo = 1; // 重置到第一页
       this.getUserList();
     },
     getUserList() {
@@ -98,7 +89,7 @@ export default {
             this.userList = res.data.records;
             this.total = res.data.total;
           } else {
-            this.$message.error(res.message);
+            this.$message.error(res.msg);
           }
         })
         .catch((err) => {
@@ -132,7 +123,8 @@ export default {
       })
     },
     add(){
-      this.userAddDialogVisible = true
+      this.info = {}
+      this.userDialogVisible = true
     }
   }
 }

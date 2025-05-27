@@ -1,8 +1,16 @@
 <template>
   <body id="login-page">
-  <el-form class="login-container" label-position="left" label-width="0px">
+    <el-form
+      ref="loginFormRef"
+      :model="loginForm"
+      :rules="rules"
+      class="login-container"
+      label-position="left"
+      label-width="0px"
+      @keyup.enter.native="login"
+    >
     <h3 class="login_title">系统登录</h3>
-    <el-form-item>
+    <el-form-item prop="loginName">
       <el-input
         type="text"
         v-model="loginForm.loginName"
@@ -10,7 +18,7 @@
         placeholder="账号"
       ></el-input>
     </el-form-item>
-    <el-form-item>
+    <el-form-item prop="password">
       <el-input
         type="password"
         v-model="loginForm.password"
@@ -21,10 +29,10 @@
     <el-form-item style="width: 100%">
       <el-button
         type="primary"
-        style="width: 100%;  border: none"
+        style="width: 100%; border: none"
         @click="login"
-      >登录</el-button
-      >
+      >登录
+      </el-button>
     </el-form-item>
   </el-form>
   </body>
@@ -33,6 +41,7 @@
 <script>
 import Cookies from "js-cookie";
 import {login} from '@/api/user.js'
+
 export default {
   name: "Login",
   data() {
@@ -41,39 +50,39 @@ export default {
         loginName: "",
         password: "",
       },
-      responseResult: [],
+      rules: {
+        loginName: [
+          {required: true, message: "请输入账号", trigger: "blur"},
+        ],
+        password: [
+          {required: true, message: "请输入密码", trigger: "blur"},
+        ],
+      },
     };
   },
   methods: {
-    login () {
-      var _this = this;
-      login({
-          username: this.loginForm.loginName,
-          password: this.loginForm.password
-        })
-      .then(successResponse => {
-        debugger
-        console.log(successResponse);
-        if (successResponse.code === 1) {
-          debugger
-          Cookies.set("token", successResponse.data.token);
-          let data= successResponse.data;
-          let token=data.token;
-          let user= data.user;
-          //存储token
-          _this.$store.commit('SET_TOKENN', token);
-          //存储user，优雅一点的做法是token和user分开获取
-          _this.$store.commit('SET_USER', user);
-          console.log(_this.$store.state.token);
-          var path = this.$route.query.redirect
-          this.$router.replace({path: path === '/' || path === undefined ? '/' : path})
-        }else{
-          this.$message.error(successResponse.message || '登录失败，请检查用户名和密码');
-        }
-      })
-    }
-  },
+    login() {
+      this.$refs.loginFormRef.validate((valid) => {
+        if (!valid) return;
 
+        login({
+          username: this.loginForm.loginName,
+          password: this.loginForm.password,
+        }).then((successResponse) => {
+          if (successResponse.code === 1) {
+            const data = successResponse.data;
+            Cookies.set("token", data.token);
+            this.$store.commit('SET_TOKEN', data.token);
+            this.$store.commit('SET_USER', data.user);
+            const path = this.$route.query.redirect;
+            this.$router.replace({path: path === '/' || path === undefined ? '/' : path});
+          } else {
+            this.$message.error(successResponse.msg || '登录失败，请检查用户名和密码');
+          }
+        });
+      });
+    },
+  },
 };
 </script>
 
@@ -86,9 +95,11 @@ export default {
   background-size: cover;
   position: fixed;
 }
+
 body {
   margin: 0px;
 }
+
 .login-container {
   border-radius: 15px;
   background-clip: padding-box;

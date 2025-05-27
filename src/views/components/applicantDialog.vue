@@ -1,13 +1,13 @@
 <template>
   <div>
-    <el-dialog title="编辑应聘人信息" :visible.sync="isShow" @close="close">
+    <el-dialog title="应聘人信息" :visible.sync="isShow" @close="close">
       <!-- 表单内容保持不变 -->
       <el-form v-model="info">
         <el-form-item label="姓名" label-width="100px">
-          <el-input :disabled="type !== 10" v-model="info.name" placeholder="请输入姓名"></el-input>
+          <el-input :disabled="userType !== 10" v-model="info.name" placeholder="请输入姓名"></el-input>
         </el-form-item>
         <el-form-item label="性别" label-width="100px" style="display: table">
-        <el-select :disabled="type !== 10" v-model="info.gender" placeholder="请选择性别">
+        <el-select :disabled="userType !== 10" v-model="info.gender" placeholder="请选择性别">
             <el-option v-for="item in genders" :key="item.value" :label="item.label" :value="item.value"></el-option>
           </el-select>
         </el-form-item>
@@ -17,7 +17,7 @@
                 type="datetime"
                 placeholder="选择日期时间"
                 format="yyyy-MM-dd HH:mm:ss"
-                :disabled="type !== 10"
+                :disabled="userType !== 10"
                 value-format="yyyy-MM-dd HH:mm:ss">
           </el-date-picker>
         </el-form-item>
@@ -26,37 +26,38 @@
                 v-model="info.graduateTime"
                 type="datetime"
                 placeholder="选择日期时间"
-                :disabled="type !== 10"
+                :disabled="userType !== 10"
                 format="yyyy-MM-dd HH:mm:ss"
                 value-format="yyyy-MM-dd HH:mm:ss">
               </el-date-picker>
         </el-form-item>
         <el-form-item label="联系电话" label-width="100px">
-          <el-input  :disabled="type !== 10" v-model="info.phone" placeholder="请输入联系电话"></el-input>
+          <el-input  :disabled="userType !== 10" v-model="info.phone" placeholder="请输入联系电话"></el-input>
         </el-form-item>
         <el-form-item label="邮箱" label-width="100px">
-          <el-input  :disabled="type !== 10" v-model="info.email" placeholder="请输入邮箱"></el-input>
+          <el-input  :disabled="userType !== 10" v-model="info.email" placeholder="请输入邮箱"></el-input>
         </el-form-item>
         <el-form-item label="居住地" label-width="100px">
-          <el-input  :disabled="type !== 10" v-model="info.address" placeholder="请输入居住地"></el-input>
+          <el-input  :disabled="userType !== 10" v-model="info.address" placeholder="请输入居住地"></el-input>
         </el-form-item>
 
         <el-form-item label="简历" label-width="100px" style="display: table">
           <template v-if="info.resumePath" >
             <el-button type="text" @click = "download">{{info.resumePath}}</el-button>
+            <el-button type="danger" :disabled="userType !== 10" size="mini" icon="el-icon-delete" @click="removeResume">删除</el-button>
           </template>
           <el-upload
             v-else
             class="upload-demo"
             drag
-            :disabled="type !== 10"
+            :disabled="userType !== 10"
             action="http://localhost:8088/api/common/upload"
             :on-success = "handlerSuccess"
             :on-error= "handleError"
             multiple>
             <i class="el-icon-upload"></i>
             <div class="el-upload__text">将文件拖到此处，或<em>点击上传</em></div>
-            <div class="el-upload__tip" slot="tip">只能上传jpg/png文件，且不超过500kb</div>
+            <div class="el-upload__tip" slot="tip">请上传简历，且不超过10MB</div>
           </el-upload>
         </el-form-item>
         <el-form-item label="面试人" label-width="100px" style="display: table">
@@ -64,18 +65,18 @@
             v-model="info.interviewerId"
             filterable
             remote
-            :disabled="type !== 10"
+            :disabled="userType !== 10"
             reserve-keyword
             placeholder="请输入姓名搜索"
             :remote-method="loadInterviewers"
             :loading="loading"
             @focus="loadInterviewers('')"
           >
-            <el-option v-for="item in interviewers" :key="item.id" :label="item.name" :value="item.id"></el-option>
+            <el-option v-for="item in interviewers" :key="item.id" :label="item.username" :value="item.id"></el-option>
           </el-select>
         </el-form-item>
         <el-form-item label="评价" label-width="100px">
-          <el-input  type="textarea" rows="5" v-model="info.evaluation" placeholder="请输入评价"></el-input>
+          <el-input :disabled="userType === null" type="textarea" rows="5" v-model="info.evaluation" placeholder="请输入评价"></el-input>
         </el-form-item>
       </el-form>
 
@@ -122,9 +123,11 @@ export default {
         this.$emit('update:visible',val)
       }
     },
-    type() {
-      return this.$store.state.user.type
-    }
+    userType() {
+      const user = this.$store.state.user
+      console.log(user && user.type)
+      return user && user.type
+    },
   },
   mounted() {
   },
@@ -158,6 +161,18 @@ export default {
     close(){
       this.isShow = false
     },
+    removeResume() {
+      this.$confirm('确定删除该简历文件？', '提示', {
+        confirmButtonText: '确定',
+        cancelButtonText: '取消',
+        type: 'warning'
+      }).then(() => {
+        this.info.resumePath = '';
+        this.$message.success('简历已删除');
+      }).catch(() => {
+        // 取消操作，无需处理
+      });
+    },
     submit(){
       console.log(this.info)
       let id = this.info.id;
@@ -168,8 +183,8 @@ export default {
             this.close()
             this.$parent.getUserList()
             this.$emit('refresh')
-          }else{
-            this.$message.error(res.message);
+          } else {
+            this.$message.error(res.msg);
           }
         })
       }else{
@@ -180,7 +195,7 @@ export default {
             this.$parent.getUserList()
             this.$emit('refresh')
           }else{
-            this.$message.error(res.message);
+            this.$message.error(res.msg);
           }
         })
       }
@@ -206,7 +221,7 @@ export default {
           this.interviewers = res.data;
           this.loading = false;
         } else {
-          this.$message.error(res.message);
+          this.$message.error(res.msg);
         }
       })
     }
