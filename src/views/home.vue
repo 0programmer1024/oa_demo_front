@@ -27,7 +27,6 @@
             应聘人管理
           </el-menu-item>
           <el-menu-item
-            v-if="type === 10"
             index="/user"
           >
             <i class="el-icon-s-custom"></i>

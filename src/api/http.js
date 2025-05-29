@@ -20,7 +20,7 @@ axios.defaults.headers.delete["Content-Type"] =
 axios.interceptors.request.use(
     (config) => {
         //    自定义请求头
-        config.headers["token"] = Cookies.get("token");
+        config.headers["token"] = "Bearer " + Cookies.get("token");
         return config;
     },
     (error) => {
@@ -29,33 +29,38 @@ axios.interceptors.request.use(
     }
 );
 // 响应拦截器
-// axios.interceptors.response.use(
-//     (response) => {
-//         if (response.status === 200) {
-//             //    接口HTTP状态码为200时
-//             return Promise.resolve(response);
-//         }
-//     },
-//     // HTTP状态码非200的情况
-//     (error) => {
-//         if (error.response.status) {
-//             switch (error.response.status) {
-//                 case 500: //    HTTP状态码500
-//                     Message.error("后台服务发生错误");
-//                     break;
-//                 case 401: //    HTTP状态码401
-//                     Message.error("无权限");
-//                     break;
-//                 case 404: //    HTTP状态码404
-//                     Message.error("当前接口不存在");
-//                     break;
-//                 default: //    页面显示接口返回的错误信息
-//                     this.$message.error(error.response.message);
-//                     return Promise.reject(error.response);
-//             }
-//         }
-//     }
-// );
+axios.interceptors.response.use(
+  (response) => {
+    if (response.status === 200) {
+      //    接口HTTP状态码为200时
+      return Promise.resolve(response);
+    }
+  },
+  // HTTP状态码非200的情况
+  (error) => {
+    if (error.response.status) {
+      switch (error.response.status) {
+        case 500: //    HTTP状态码500
+          Message.error("系统错误");
+          break;
+        case 401:
+          Cookies.remove('token');
+          Message.error("认证失败，无法访问系统资源");
+          break;
+        case 403:
+          Cookies.remove('token');
+          Message.error("权限不足，无法访问系统资源");
+          break;
+        case 404: //    HTTP状态码404
+          Message.error("访问地址不存在");
+          break;
+        default: //    页面显示接口返回的错误信息
+          this.$message.error(error.response.message);
+          return Promise.reject(error.response);
+      }
+    }
+  }
+);
 
 /**
  * get方法，对应get请求

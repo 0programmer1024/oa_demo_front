@@ -7,6 +7,7 @@ import ElementUI from 'element-ui'
 import 'element-ui/lib/theme-chalk/index.css'
 import store from './store'
 import axios from "axios";
+import Cookies from "js-cookie";
 
 Vue.config.productionTip = false
 
@@ -19,8 +20,8 @@ axios.defaults.baseURL = 'http://localhost:8088/api'
 router.beforeEach((to, from, next) => {
     //路由需要认证
     if (to.meta.requireAuth) {
-      //判断store里是否有token
-      if (store.state.token) {
+      //判断cookie里是否有token
+      if (Cookies.get("token")) {
         next()
       } else {
         next({
